@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Analysis default module is used to analyze the general performance of any model on any task, it is launched by default by deepmodeloptim, hence the name.
+"""
+
 import argparse
 import json
 import os

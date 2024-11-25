@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+Check model module is used to check model "soudness" before launching full tuning. 
+
+It incorporates various checks 
+"""
+
 import argparse
 import json
 import os
@@ -124,19 +130,19 @@ def main(
     ray_results_dirpath: str = None,
     _debug_mode: str = False,
 ) -> None:
-    # TODO update to yaml the experimnt config
-    # load json into dictionary
+
     exp_config = {}
     with open(experiment_config) as in_json:
-        exp_config = json.load(in_json)
+        exp_config = json.load(in_json)  
 
-    # Initialize json schema it checks for correctness of the Json architecture and fields / values. already raises errors.
+    # json is soon deprecated and will be removed in favour of a yaml config file.
+
+    # in theory, checking json should happen in a seperate utility
     schema = JsonSchema(exp_config)
 
     # initialize the experiment class
     initialized_experiment_class = get_experiment(schema.experiment)
 
-    # import the model correctly but do not initialize it yet, ray_tune does that itself
     model_class = import_class_from_file(model_path)
 
     # Update the tune config file. no need to run the whole amount asked for the tuning. Basically downsample the tuning.
@@ -159,14 +165,9 @@ def main(
         if initial_weights_path is not None:
             user_tune_config["model_params"]["initial_weights"] = os.path.abspath(initial_weights_path)
 
-        # TODO future schedulers specific info will go here as well. maybe find a cleaner way.
-
-        # TODO check if among the first 2 values of all splitters params there is a percentage that makes the resulting split smaller that the biggest batch value
-
         # save to file the new dictionary because StimulusTuneWrapper only takes paths
         yaml.dump(user_tune_config, new_conf)
 
-    # initialize the csv processing class, it open and reads the csv in automatic
     csv_obj = CsvProcessing(initialized_experiment_class, data_path)
     downsampled_csv = "downsampled.csv"
 
@@ -184,7 +185,7 @@ def main(
     # compute the memory requirements for ray init. Usefull in case ray detects them wrongly. Memory is split in two for ray: for store_object memory and the other actual memory for tuning. The following function takes the total possible usable/allocated memory as a string parameter and return in bytes the values for store_memory (30% as default in ray) and memory (70%).
     object_store_mem, mem = memory_split_for_ray_init(memory)
 
-    # set ray_result dir ubication. TODO this version of pytorch does not support relative paths, in future maybe good to remove abspath.
+    # set ray_result dir
     ray_results_dirpath = None if ray_results_dirpath is None else os.path.abspath(ray_results_dirpath)
 
     # Create the learner
