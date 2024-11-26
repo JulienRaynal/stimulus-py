@@ -1,4 +1,7 @@
-"""This file contains encoders classes for encoding various types of data."""
+"""This file contains encoders classes for encoding various types of data.  
+Encoders are classes that transfrom the raw data into a rapresentation that should be the exact input of the model.
+This mainly happen through enconding, padding, class convertion and other mathematical operations.
+"""
 
 import logging
 import multiprocessing as mp
@@ -13,15 +16,6 @@ logger = logging.getLogger(__name__)
 
 class AbstractEncoder(ABC):
     """Abstract class for encoders.
-
-    Encoders are classes that encode string data into numerical representations, said numerical representations should be the exact input of the model.
-
-    Methods:
-        encode: encodes a single data point
-        encode_all: encodes a list of data points into a numpy array
-        encode_multiprocess: encodes a list of data points using multiprocessing
-        decode: decodes a single data point
-
     """
 
     @abstractmethod
@@ -34,7 +28,7 @@ class AbstractEncoder(ABC):
             data (any): a single data point
 
         Returns:
-            encoded_data_point (any): Òthe encoded data point
+            encoded_data_point (any): the encoded data point
         """
         raise NotImplementedError
 
@@ -77,6 +71,22 @@ class AbstractEncoder(ABC):
         """
         with mp.Pool(mp.cpu_count()) as pool:
             return pool.map(self.encode, data)
+        
+    def _check_data_islist(self, data: list) -> Any:
+        """Helper function for checking if the data is a list. 
+        
+        usefull for encode_all functions.
+
+        Args:
+            data (list): a list of data points
+        
+        Raises:
+            ValueError: If the input data is not a list.
+        """
+        if not isinstance(data, list):
+            error_msg = f"Expected list input for encode_all, got {type(data).__name__}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
 
 class TextOneHotEncoder(AbstractEncoder):
@@ -88,13 +98,6 @@ class TextOneHotEncoder(AbstractEncoder):
     Attributes:
         alphabet (str): the alphabet to one hot encode the data with
         encoder (OneHotEncoder): preprocessing.OneHotEncoder object initialized with self.alphabet
-
-    Methods:
-        encode: encodes a single data point
-        encode_all: encodes a list of data points into a numpy array
-        encode_multiprocess: encodes a list of data points using multiprocessing
-        decode: decodes a single data point
-        _sequence_to_array: transforms a sequence into a numpy array
     """
 
     def __init__(self, alphabet: str = "acgt") -> None:
@@ -182,11 +185,7 @@ class TextOneHotEncoder(AbstractEncoder):
 
         TODO instead maybe we can run encode_multiprocess when data size is larger than a certain threshold.
         """
-        if not isinstance(data, list):
-            encoded_data = self.encode(data)
-            return np.array(
-                [encoded_data],
-            )  # reshape the array in a batch of 1 configuration as a np.ndarray (so shape is (1, sequence_length, alphabet_length))
+        self._check_data_islist(data)
 
         encoded_data = self.encode_multiprocess(data)
         # try to transform the list of arrays to a single array and return it
@@ -197,94 +196,154 @@ class TextOneHotEncoder(AbstractEncoder):
             return encoded_data
 
     def decode(self, data: np.array) -> str:
-        """Decodes the data."""
+        """Decode a one-hot encoded array into a string sequence.
+
+        Args:
+            data (np.array): one-hot encoded array.
+
+        Returns:
+            str: the decoded string sequence.
+        """
         return self.encoder.inverse_transform(data)
 
 
 class FloatEncoder(AbstractEncoder):
-    """Encoder for float data."""
-
-    def encode(self, data: float) -> float:
-        """Encodes the data.
-        This method takes as input a single data point, should be mappable to a single output.
-        """
-        return float(data)
+    """convert to float
+    """
 
     def encode_all(self, data: list) -> np.array:
-        """Encodes the data.
-        This method takes as input a list of data points, should be mappable to a single output.
+        """Encode a list of values.
+
+        Args:
+            data (list): a list of values. They can be tecnically anything that can beconverted to float.
+
+        Returns:
+            np.array: a numpy array of floats.
+
+        Raises:
+            ValueError: If the input data is not a list.
         """
-        if not isinstance(data, list):
-            data = [data]
-        return np.array([self.encode(d) for d in data])
-
-    def decode(self, data: float) -> float:
-        """Decodes the data."""
-        return data
+        self._check_data_islist(data)
+        return np.array([float(d) for d in data])
 
 
-class IntEncoder(FloatEncoder):
-    """Encoder for integer data."""
 
-    def encode(self, data: int) -> int:
-        """Encodes the data.
-        This method takes as input a single data point, should be mappable to a single output.
+class IntEncoder(AbstractEncoder):
+    """convert to int.
+    """
+
+    def encode_all(self, data: list) -> np.array:
+        """Encode a list of values.
+
+        Args:
+            data (list): a list of values. They can be tecnically anything that can be converted to int.
+
+        Returns:
+            np.array: a numpy array of ints.
+
+        Raises:
+            ValueError: If the input data is not a list.
         """
-        return int(data)
+        self._check_data_islist(data)
+        return np.array([int(d) for d in data])
 
 
 class StrClassificationIntEncoder(AbstractEncoder):
-    """Considering a ensemble of strings, this encoder encodes them into integers from 0 to (n-1) where n is the number of unique strings."""
+    """Considering a ensemble of strings, this encoder encodes them into integers from 0 to (n-1),
+    where n is the number of unique strings.
+    """
 
     def encode(self, data: str) -> int:
-        """Returns an error since encoding a single string does not make sense."""
+        """Encode a single string (not supported).
+
+        Raises:
+            NotImplementedError: Always raises this exception.
+        """
         raise NotImplementedError("Encoding a single string does not make sense. Use encode_all instead.")
 
     def encode_all(self, data: list) -> np.array:
-        """Encodes the data.
-        This method takes as input a list of data points, should be mappable to a single output, using LabelEncoder from scikit learn and returning a numpy array.
+        """Encode a list of strings into integer labels.
+
+        Input should be mappable to a single output using LabelEncoder from scikit learn.
         For more info visit : https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html
+
+        Args:
+            data (list): list of strings,
+
+        Returns:
+            np.array: numpy array of integer labels.
+
+        Raises:
+            ValueError: If the input data is not a list.
         """
-        if not isinstance(data, list):
-            data = [data]
+        self._check_data_islist(data)
         encoder = preprocessing.LabelEncoder()
         return encoder.fit_transform(data)
 
     def decode(self, data: Any) -> Any:
-        """Returns an error since decoding does not make sense without encoder information, which is not yet supported."""
+        """Decode integer labels (not supported).
+
+        Raises:
+            NotImplementedError: Always raises this exception.
+        """
         raise NotImplementedError("Decoding is not yet supported for StrClassificationInt.")
 
 
 class StrClassificationScaledEncoder(StrClassificationIntEncoder):
-    """Considering a ensemble of strings, this encoder encodes them into floats from 0 to 1 (essentially scaling the integer encoding)."""
+    """Considering a ensemble of strings, this encoder encodes them into floats from 0 to 1 
+    (essentially scaling the integer encoding).
+    """
 
     def encode_all(self, data: list) -> np.array:
-        """Encodes the data.
-        This method takes as input a list of data points, should be mappable to a single output, using LabelEncoder from scikit learn and returning a numpy array.
+        """Encode a list of strings into scaled float labels.
+
+        Input should be mappable to a single output, using LabelEncoder from scikit learn and returning a numpy array.
         For more info visit : https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html
+
+        Args:
+            data (list): list of strings.
+
+        Returns:
+            np.array: array of scaled float labels.
         """
         encoded_data = super().encode_all(data)
         return encoded_data / (len(np.unique(encoded_data)) - 1)
 
     def decode(self, data: Any) -> Any:
-        """Returns an error since decoding does not make sense without encoder information, which is not yet supported."""
+        """Decode scaled float labels (not supported).
+
+        Raises:
+            NotImplementedError: Always raises this exception.
+        """
         raise NotImplementedError("Decoding is not yet supported for StrClassificationScaled.")
 
 
 class FloatRankEncoder(AbstractEncoder):
-    """Considering an ensemble of float values, this encoder encodes them into floats from 0 to 1, where 1 is the maximum value and 0 is the minimum value."""
+    """Considering an ensemble of float values, this encoder encodes them into floats from 0 to 1, 
+    where 1 is the maximum value and 0 is the minimum value.
+    """
 
     def encode(self, data: float) -> float:
-        """Returns an error since encoding a single float does not make sense."""
+        """Encode a single float (not supported).
+
+        Raises:
+            NotImplementedError: Always raises this exception.
+        """
         raise NotImplementedError("Encoding a single float does not make sense. Use encode_all instead.")
 
     def encode_all(self, data: list) -> np.array:
-        """Encodes the data.
-        This method takes as input a list of data points, should be mappable to a single output
+        """Encode a list of floats into normalized ranks.
+
+        Args:
+            data (list): list of floats
+
+        Returns:
+            np.array: array of normalized ranks
+
+        Raises:
+            ValueError: If the input data is not a list.
         """
-        # Convert to array if needed
-        if not isinstance(data, list):
-            data = [data]
+        self._check_data_islist(data)
         data = np.array(data)
 
         # Get ranks (0 is lowest, n-1 is highest)
@@ -294,24 +353,40 @@ class FloatRankEncoder(AbstractEncoder):
         return ranks / (len(ranks) - 1)
 
     def decode(self, data: Any) -> Any:
-        """Returns an error since decoding does not make sense without encoder information, which is not yet supported."""
+        """Decode normalized ranks (not supported).
+
+        Raises:
+            NotImplementedError: Always raises this exception.
+        """
         raise NotImplementedError("Decoding is not yet supported for FloatRank.")
 
 
 class IntRankEncoder(FloatRankEncoder):
-    """Considering an ensemble of integer values, this encoder encodes them into floats from 0 to 1, where 1 is the maximum value and 0 is the minimum value."""
+    """Considering an ensemble of integer values, this encoder encodes them into floats from 0 to 1, 
+    where 1 is the maximum value and 0 is the minimum value.
+    """
 
     def encode(self, data: int) -> int:
-        """Returns an error since encoding a single integer does not make sense."""
+        """Encode a single integer (not supported).
+
+        Raises:
+            NotImplementedError: Always raises this exception.
+        """
         raise NotImplementedError("Encoding a single integer does not make sense. Use encode_all instead.")
 
     def encode_all(self, data: list) -> np.array:
-        """Encodes the data.
-        This method takes as input a list of data points, should be mappable to a single output, using min-max scaling.
+        """Encodes the data using min-max scaling.
+
+        Args:
+            data (list): list of integers
+
+        Returns:
+            np.array: array of normalized ranks
+
+        Raises:
+            ValueError: If the input data is not a list.
         """
-        # Convert to array if needed
-        if not isinstance(data, list):
-            data = [data]
+        self._check_data_islist(data)
         data = np.array(data)
 
         # Get ranks (0 is lowest, n-1 is highest)
@@ -320,5 +395,9 @@ class IntRankEncoder(FloatRankEncoder):
         return ranks
 
     def decode(self, data: Any) -> Any:
-        """Returns an error since decoding does not make sense without encoder information, which is not yet supported."""
+        """Decode normalized ranks (not supported).
+
+        Raises:
+            NotImplementedError: Always raises this exception.
+        """
         raise NotImplementedError("Decoding is not yet supported for IntRank.")

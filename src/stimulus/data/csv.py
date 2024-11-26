@@ -258,10 +258,10 @@ class CsvLoader(CsvHandler):
             data_type = key.split(":")[1]
 
             # get the data at the given index
-            # if the data is not a list, it is converted to a list
-            # otherwise it breaks Float().encode_all(data) because it expects a list
             data = dictionary[key] if idx is None else dictionary[key][idx]
 
+            # if the data is not a list, it is converted to a list
+            # otherwise it breaks encode_all() function of many encoders because they expect a list
             if not isinstance(data, list):
                 data = [data]
 
