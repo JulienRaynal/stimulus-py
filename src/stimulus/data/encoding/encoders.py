@@ -322,7 +322,7 @@ class StrClassificationScaledEncoder(StrClassificationIntEncoder):
         return encoded_data / (len(np.unique(encoded_data)) - 1)
 
     def decode(self, data: Any) -> Any:
-        """Decode scaled float labels (not supported).
+        """Decodes scaled float labels (not supported).
 
         Raises:
             NotImplementedError: Always raises this exception.
