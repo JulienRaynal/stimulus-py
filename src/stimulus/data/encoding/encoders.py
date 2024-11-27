@@ -344,7 +344,7 @@ class FloatRankEncoder(AbstractEncoder):
         raise NotImplementedError("Encoding a single float does not make sense. Use encode_all instead.")
 
     def encode_all(self, data: list) -> np.array:
-        """Encode a list of floats into normalized ranks.
+        """Encodes a list of floats into normalized ranks.
 
         Args:
             data (list): list of floats
