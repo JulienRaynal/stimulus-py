@@ -15,7 +15,21 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractEncoder(ABC):
-    """Abstract class for encoders."""
+    """This class defines the blueprint for all encoder classes.
+
+    Child classes must implement the following methods with the specified input and output types:
+
+    Methods:
+        encode(data: Any) -> Any:
+            Encodes a single data point. The type of `data` and the encoded output depends on the specific encoder implementation.
+
+        encode_all(data: list) -> np.array:
+            Encodes a list of data points into a numpy array. The input should be a list of data points,
+            and the output should be a numpy array of the encoded representations.
+
+        decode(data: Any) -> Any:
+            Decodes a single encoded data point. The type of `data` and the decoded output depends on the specific encoder implementation.
+    """
 
     @abstractmethod
     def encode(self, data: Any) -> Any:
