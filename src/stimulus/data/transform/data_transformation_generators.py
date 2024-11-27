@@ -10,9 +10,9 @@ import numpy as np
 class AbstractDataTransformer(ABC):
     """Abstract class for data transformers.
 
-    Data transformers implement in_place or augmentation transformations. 
+    Data transformers implement in_place or augmentation transformations.
     Whether it is in_place or augmentation is specified in the "add_row" attribute (should be True or False and set in children classes constructor)
-    
+
     Child classes should override the `transform` and `transform_all` methods.
 
     `transform_all` should always return a list

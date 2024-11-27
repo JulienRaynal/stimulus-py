@@ -1,4 +1,4 @@
-"""This file contains encoders classes for encoding various types of data.  
+"""This file contains encoders classes for encoding various types of data.
 Encoders are classes that transfrom the raw data into a rapresentation that should be the exact input of the model.
 This mainly happen through enconding, padding, class convertion and other mathematical operations.
 """
@@ -15,8 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractEncoder(ABC):
-    """Abstract class for encoders.
-    """
+    """Abstract class for encoders."""
 
     @abstractmethod
     def encode(self, data: Any) -> Any:
@@ -71,15 +70,15 @@ class AbstractEncoder(ABC):
         """
         with mp.Pool(mp.cpu_count()) as pool:
             return pool.map(self.encode, data)
-        
+
     def _check_data_islist(self, data: list) -> Any:
-        """Helper function for checking if the data is a list. 
-        
+        """Helper function for checking if the data is a list.
+
         usefull for encode_all functions.
 
         Args:
             data (list): a list of data points
-        
+
         Raises:
             ValueError: If the input data is not a list.
         """
@@ -208,8 +207,18 @@ class TextOneHotEncoder(AbstractEncoder):
 
 
 class FloatEncoder(AbstractEncoder):
-    """convert to float
-    """
+    """convert to float"""
+
+    def encode(self, data: float) -> float:
+        """Encode a single float.
+
+        Args:
+            data (float): a single float
+
+        Returns:
+            float: the same float
+        """
+        return float(data)
 
     def encode_all(self, data: list) -> np.array:
         """Encode a list of values.
@@ -226,26 +235,31 @@ class FloatEncoder(AbstractEncoder):
         self._check_data_islist(data)
         return np.array([float(d) for d in data])
 
+    def decode(self, data: float) -> float:
+        """Decode a float.
+
+        Args:
+            data (float): a single encoded float
+
+        Returns:
+            float: the same float
+        """
+        return data
 
 
 class IntEncoder(AbstractEncoder):
-    """convert to int.
-    """
+    """convert to int."""
 
-    def encode_all(self, data: list) -> np.array:
-        """Encode a list of values.
+    def encode(self, data: int) -> int:
+        """Encode a single integer.
 
         Args:
-            data (list): a list of values. They can be tecnically anything that can be converted to int.
+            data (int): a single integer
 
         Returns:
-            np.array: a numpy array of ints.
-
-        Raises:
-            ValueError: If the input data is not a list.
+            int: the same integer
         """
-        self._check_data_islist(data)
-        return np.array([int(d) for d in data])
+        return int(data)
 
 
 class StrClassificationIntEncoder(AbstractEncoder):
@@ -290,7 +304,7 @@ class StrClassificationIntEncoder(AbstractEncoder):
 
 
 class StrClassificationScaledEncoder(StrClassificationIntEncoder):
-    """Considering a ensemble of strings, this encoder encodes them into floats from 0 to 1 
+    """Considering a ensemble of strings, this encoder encodes them into floats from 0 to 1
     (essentially scaling the integer encoding).
     """
 
@@ -319,7 +333,7 @@ class StrClassificationScaledEncoder(StrClassificationIntEncoder):
 
 
 class FloatRankEncoder(AbstractEncoder):
-    """Considering an ensemble of float values, this encoder encodes them into floats from 0 to 1, 
+    """Considering an ensemble of float values, this encoder encodes them into floats from 0 to 1,
     where 1 is the maximum value and 0 is the minimum value.
     """
 
@@ -362,7 +376,7 @@ class FloatRankEncoder(AbstractEncoder):
 
 
 class IntRankEncoder(FloatRankEncoder):
-    """Considering an ensemble of integer values, this encoder encodes them into floats from 0 to 1, 
+    """Considering an ensemble of integer values, this encoder encodes them into floats from 0 to 1,
     where 1 is the maximum value and 0 is the minimum value.
     """
 
