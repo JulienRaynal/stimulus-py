@@ -73,7 +73,6 @@ class AbstractEncoder(ABC):
     def _check_data_islist(self, data: list) -> Any:
         """Helper function for checking if the data is a list.
 
-        usefull for encode_all functions.
 
         Args:
             data (list): a list of data points
