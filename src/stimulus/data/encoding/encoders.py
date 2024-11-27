@@ -407,7 +407,7 @@ class IntRankEncoder(FloatRankEncoder):
         return ranks
 
     def decode(self, data: Any) -> Any:
-        """Decode normalized ranks (not supported).
+        """Decodes normalized ranks (not supported).
 
         Raises:
             NotImplementedError: Always raises this exception.
