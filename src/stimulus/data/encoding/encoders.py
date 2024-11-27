@@ -1,6 +1,5 @@
 """This file contains encoders classes for encoding various types of data.
-Encoders are classes that transfrom the raw data into a rapresentation that should be the exact input of the model.
-This mainly happen through enconding, padding, class convertion and other mathematical operations.
+Encoders are classes that transfrom the raw data into the model's input (i.e. should have the right shape, type, format etc.)
 """
 
 import logging
@@ -88,7 +87,6 @@ class AbstractEncoder(ABC):
     def _check_data_islist(self, data: list) -> Any:
         """Helper function for checking if the data is a list.
 
-        usefull for encode_all functions.
 
         Args:
             data (list): a list of data points
@@ -332,13 +330,13 @@ class StrClassificationScaledEncoder(StrClassificationIntEncoder):
             data (list): list of strings.
 
         Returns:
-            np.array: array of scaled float labels.
+            np.array (float): array of scaled float labels.
         """
         encoded_data = super().encode_all(data)
         return encoded_data / (len(np.unique(encoded_data)) - 1)
 
     def decode(self, data: Any) -> Any:
-        """Decode scaled float labels (not supported).
+        """Decodes scaled float labels (not supported).
 
         Raises:
             NotImplementedError: Always raises this exception.
@@ -360,13 +358,13 @@ class FloatRankEncoder(AbstractEncoder):
         raise NotImplementedError("Encoding a single float does not make sense. Use encode_all instead.")
 
     def encode_all(self, data: list) -> np.array:
-        """Encode a list of floats into normalized ranks.
+        """Encodes a list of floats into normalized ranks.
 
         Args:
             data (list): list of floats
 
         Returns:
-            np.array: array of normalized ranks
+            np.array (float): array of normalized ranks
 
         Raises:
             ValueError: If the input data is not a list.
@@ -423,7 +421,7 @@ class IntRankEncoder(FloatRankEncoder):
         return ranks
 
     def decode(self, data: Any) -> Any:
-        """Decode normalized ranks (not supported).
+        """Decodes normalized ranks (not supported).
 
         Raises:
             NotImplementedError: Always raises this exception.
