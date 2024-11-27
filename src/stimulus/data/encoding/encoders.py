@@ -316,7 +316,7 @@ class StrClassificationScaledEncoder(StrClassificationIntEncoder):
             data (list): list of strings.
 
         Returns:
-            np.array: array of scaled float labels.
+            np.array (float): array of scaled float labels.
         """
         encoded_data = super().encode_all(data)
         return encoded_data / (len(np.unique(encoded_data)) - 1)
