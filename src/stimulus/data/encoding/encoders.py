@@ -350,7 +350,7 @@ class FloatRankEncoder(AbstractEncoder):
             data (list): list of floats
 
         Returns:
-            np.array: array of normalized ranks
+            np.array (float): array of normalized ranks
 
         Raises:
             ValueError: If the input data is not a list.
