@@ -1,6 +1,5 @@
 """This file contains encoders classes for encoding various types of data.
 Encoders are classes that transfrom the raw data into a rapresentation that should be the exact input of the model.
-This mainly happen through enconding, padding, class convertion and other mathematical operations.
 """
 
 import logging
